@@ -162,7 +162,8 @@ export function getEmptyFilterDefinition() {
     label: 'Fliter Label',
     type: {},
     apiUrl: '',
-    isParameterized: false
+    isParameterized: false,
+    dropdownContentList: []
   }
 }
 

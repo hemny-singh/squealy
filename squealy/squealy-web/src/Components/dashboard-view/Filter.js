@@ -68,7 +68,7 @@ class SquealyDropdown extends Component {
         {filterData?
           filterData.data.map((option, i) => {
             return (
-              <option key={'dropdown_'+i} value={option[0]}>{option[0]}</option>
+              <option key={'dropdown_'+i} value={option}>{option}</option>
             )
           })
           :
@@ -120,12 +120,24 @@ export default class Filter extends Component {
 
   refreshFilterData = (filterValues) => {
     const {filterDefinition, updateFilterValues} = this.props
-    if(filterDefinition.apiUrl) {
+    if(filterDefinition.subType === 'api' && filterDefinition.apiUrl) {
       const url = DOMAIN_NAME + 'squealy-apis/' + filterDefinition.apiUrl
-      getApiRequest(url, filterValues, (data)=> { 
-                                          this.setState({filterData: data})
-                                          updateFilterValues(filterDefinition.label, data.data[0][0])
-                                        }, ()=>{}, null)
+      getApiRequest(url, filterValues, (data)=> {
+        let filterData = {}
+        filterData.data = []
+        for (option in data.data) {
+          if (option.length) {
+            filterData.data.push(option[0])
+          }
+        }
+        this.setState({filterData: filterData})
+        updateFilterValues(filterDefinition.label, data.data[0][0])
+      }, ()=>{}, null)
+    } else if (filterDefinition.type === 'dropdown' && filterDefinition.subType === 'list') {
+      let dropdownContent = {}
+      dropdownContent.data = filterDefinition.dropdownContentList
+      this.setState({filterData: dropdownContent})
+      updateFilterValues(filterDefinition.label, filterDefinition.dropdownContentList[0])
     }
   }
 

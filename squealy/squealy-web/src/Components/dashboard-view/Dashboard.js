@@ -42,7 +42,8 @@ export default class Dashboard extends Component {
             filterValues: {},
             showChartApiModal: false,
             newApiType: null,
-            displayColorPicker: false
+            displayColorPicker: false,
+            apiUrl: true,
         }
     }
 
@@ -292,6 +293,43 @@ export default class Dashboard extends Component {
       }
     }
 
+    updateDropdownContentDef = (dropdownContentInputType) => {
+      let apiUrlType = false,
+        curSelectedFilter = Object.assign({}, this.state.selectedFilter)
+      if (dropdownContentInputType === 'apiUrl') {
+        apiUrlType = true
+        curSelectedFilter.subType = 'api'
+      } else {
+        curSelectedFilter.subType = 'list'
+      }
+
+      this.setState({apiUrl: apiUrlType, selectedFilter: curSelectedFilter})
+    }
+
+    setDropdownContentList = (eventType, index, value) => {
+      let currentSelectedFilter = Object.assign({}, this.state.selectedFilter),
+        tempDropdownContent = currentSelectedFilter.dropdownContentList
+
+      if (eventType === 'add') {
+        tempDropdownContent.push('New Value')
+      } else if (eventType === 'update') {
+        tempDropdownContent[index] = value
+      } else {
+        tempDropdownContent.splice(index, 0)
+      }
+      currentSelectedFilter.dropdownContentList = tempDropdownContent
+      this.setState({selectedFilter: currentSelectedFilter})
+    }
+
+    updateDropdownContentList = (index, value) => {
+      let currentSelectedFilter = Object.assign({}, this.state.selectedFilter),
+        tempDropdownContent = currentSelectedFilter.dropdownContentList
+
+      tempDropdownContent[index] = value
+      currentSelectedFilter.dropdownContentList = tempDropdownContent
+      this.setState({selectedFilter: currentSelectedFilter})
+    }
+
   render() {
     const {
       dashboardDefinition,
@@ -317,12 +355,13 @@ export default class Dashboard extends Component {
       filterValues,
       showChartApiModal,
       newApiType,
-      displayColorPicker
+      displayColorPicker,
+      apiUrl
     } = this.state
 
     const filterModalContent =
       selectedFilter?
-      <div className="row">
+      <div className="row filter-modal">
         <div className="col-md-12">
           <label className="col-md-4">Filter Label: </label>
           <input 
@@ -346,25 +385,61 @@ export default class Dashboard extends Component {
           </div>
         </div>
         {(selectedFilter.type === 'dropdown')?
-          <div>
-            <div className="col-md-12">
-              <label className="col-md-4">Api Url: </label>
-              <input 
-                type="text"
-                ref="filterLabel"
-                value={selectedFilter.apiUrl}
-                onChange={(event)=>this.updateFilterDefinition('apiUrl', event.target.value)}
-              />
-              <img  
-                src={AddIcon}
-                className='add-icon'
-                onClick={()=>this.chartApiModalVisibilityEnabler()}
-              />
-            </div>
-            <div className="col-md-12">
-              <label className="col-md-4">Parameterized: </label>
-              <input type='checkbox' checked={selectedFilter.isParameterized} onChange={(event)=>this.updateFilterDefinition('isParameterized', event.target.checked)} /> 
-            </div>
+          <div className="col-md-12 dropdown-filter-content">
+            <label className='radio-inline'>
+              <input type="radio" name='dropdownContentChoiceAPI' checked={this.state.apiUrl} onChange={() => {this.updateDropdownContentDef('apiUrl')}}/>Using API
+            </label>
+            <label className='radio-inline'>
+              <input type='radio' name='dropdownContentChoiceList' checked={!this.state.apiUrl} onChange={() => {this.updateDropdownContentDef('list')}}/>Using List
+            </label>
+            {
+              apiUrl ?
+                <div>
+                  <div>
+                    <label className="col-md-4">Api Url: </label>
+                    <input 
+                      type="text"
+                      ref="filterLabel"
+                      value={selectedFilter.apiUrl}
+                      onChange={(event)=>this.updateFilterDefinition('apiUrl', event.target.value)}
+                    />
+                    <img  
+                      src={AddIcon}
+                      className='add-icon'
+                      onClick={()=>this.chartApiModalVisibilityEnabler()}
+                    />
+                  </div>
+                  <div>
+                    <label className="col-md-4">Parameterized: </label>
+                    <input type='checkbox' checked={selectedFilter.isParameterized} onChange={(event)=>this.updateFilterDefinition('isParameterized', event.target.checked)} /> 
+                  </div>
+                </div>
+              : 
+              <div>
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Dropdown Content List</th>
+                      <th onClick={() => this.setDropdownContentList('add')}><i className="fa fa-plus"></i></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {
+                      this.state.hasOwnProperty('selectedFilter') ?
+                        this.state.selectedFilter.dropdownContentList.map((value, key) => {
+                          return (
+                            <tr key={'dropdown_content_'+key}>
+                              <td> <input value={value} onBlur={() => this.setDropdownContentList('update', key, this.state.selectedFilter.dropdownContentList[key])} placeholder='Enter Class Name' onChange={(e) => this.updateDropdownContentList(key, e.target.value)}/> </td>
+                              <td onClick={() => this.setDropdownContentList('del', key)}><i className="fa fa-trash"/></td>
+                            </tr>
+                          )
+                        })
+                        : null
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
           </div>
         :
           null
